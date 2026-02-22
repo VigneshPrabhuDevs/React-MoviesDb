@@ -39,3 +39,21 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+
+# IDE - VS Code
+.vscode/
+
+# IDE - Android Studio (since you'll use it for Emulator/Logcat)
+.idea/
+*.iml
+*.hprof
+
+# Environment Variables (Crucial for API Keys)
+.env
+.env.local
+.env.development
+.env.production
+
+# React Native / Metro
+.metro/
