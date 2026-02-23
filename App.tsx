@@ -4,8 +4,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Adjust these paths based on where you moved your files!
-import HomeScreen from './screens/HomeScreen'; 
-import DetailsScreen from './screens/DetailsScreen';
+import HomeScreen from './src/screens/HomeScreen'; 
+import DetailsScreen from './src/screens/DetailsScreen';
 
 const Stack = createStackNavigator();
 
