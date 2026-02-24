@@ -1,13 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useLayoutEffect } from 'react';
+import { View, FlatList, StyleSheet, ActivityIndicator, Button } from 'react-native';
 // 1. Import your new custom component
-import { MovieCard } from '../components/MovieCard'; 
+import { MovieCard } from '../components/MovieCard';
 import { Movie } from '../types/movie';
 import { MovieService } from '../services/movieService';
 
 export default function HomeScreen({ navigation }: any) {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button
+          onPress={() => navigation.navigate('Favourites')}
+          title="Favourites"
+          color="#fff"
+        />
+      ),
+    });
+  }, [navigation]);
 
   useEffect(() => {
     fetchMovies();

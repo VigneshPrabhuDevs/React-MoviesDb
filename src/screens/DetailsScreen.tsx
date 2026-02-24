@@ -5,19 +5,67 @@ import {
   StyleSheet, 
   ScrollView, 
   ActivityIndicator, 
-  TouchableOpacity 
+  TouchableOpacity, 
+  Linking
 } from 'react-native';
 import { Image } from 'expo-image';
 import { MovieService } from '../services/movieService';
 import { Movie } from '../types/movie';
 import { StorageService } from '../api/storage';
 import Ionicons from '@expo/vector-icons/Ionicons'; 
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system/legacy';// import { cacheDirectory, downloadAsync } from 'expo-file-system';
+import * as Location from 'expo-location';
+import * as MediaLibrary from 'expo-media-library';
+import { Alert } from 'react-native';
+
 
 export default function DetailsScreen({ route }: any) {
   const { movieId } = route.params; 
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+
+const handleShare = async () => {
+  if (!(await Sharing.isAvailableAsync())) {
+    alert("Sharing is not available on this platform");
+    return;
+  }
+
+  // Use the FileSystem namespace to access properties and methods
+  const uri = `https://image.tmdb.org/t/p/w780${movie?.poster_path}`;
+  const fileUri = FileSystem.cacheDirectory + 'movie-poster.jpg';
+  
+  try {
+    // Ensure you use FileSystem. prefix here as well
+    await FileSystem.downloadAsync(uri, fileUri);
+    await Sharing.shareAsync(fileUri);
+  } catch (error) {
+    console.error("Sharing error:", error);
+  }
+};
+const handleSaveToGallery = async () => {
+  try {
+    // Specify that we only need 'writeOnly' access to avoid the Audio requirement
+    const { status } = await MediaLibrary.requestPermissionsAsync(false); // 'true' for write-only access
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'We need gallery access to save the poster.');
+      return;
+    }
+
+    const uri = `https://image.tmdb.org/t/p/w780${movie?.poster_path}`;
+    const fileUri = FileSystem.cacheDirectory + 'poster-download.jpg';
+    
+    await FileSystem.downloadAsync(uri, fileUri);
+    await MediaLibrary.saveToLibraryAsync(fileUri);
+    
+    Alert.alert('Success!', 'Poster saved to gallery.');
+  } catch (error) {
+    console.error('Save error:', error);
+  }
+};
+
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -68,6 +116,7 @@ export default function DetailsScreen({ route }: any) {
   if (!movie) return <View style={styles.center}><Text>Movie not found</Text></View>;
 
   return (
+    
     <ScrollView style={styles.container} bounces={false}>
       <Image 
         source={{ uri: `https://image.tmdb.org/t/p/w780${movie.poster_path}` }} 
@@ -79,7 +128,12 @@ export default function DetailsScreen({ route }: any) {
       <View style={styles.content}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>{movie.title}</Text>
-          <TouchableOpacity 
+
+          <TouchableOpacity onPress={handleShare} activeOpacity={0.6}>
+      <Ionicons name="share-outline" size={28} color="#2c3e50" />
+    </TouchableOpacity>
+
+            <TouchableOpacity 
             onPress={handleToggleFavorite} 
             activeOpacity={0.6}
             style={styles.favoriteBtn}
@@ -90,6 +144,14 @@ export default function DetailsScreen({ route }: any) {
               color={isFavorite ? "#e74c3c" : "#2c3e50"} 
             />
           </TouchableOpacity>
+
+          <TouchableOpacity 
+    style={[styles.actionBtn, { backgroundColor: '#27ae60' }]} 
+    onPress={handleSaveToGallery}
+  >
+    <Ionicons name="download-outline" size={20} color="#fff" />
+    <Text style={styles.actionText}>Save to Gallery</Text>
+  </TouchableOpacity>
         </View>
 
         <View style={styles.metaRow}>
@@ -102,7 +164,10 @@ export default function DetailsScreen({ route }: any) {
       </View>
     </ScrollView>
   );
+  
 }
+
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
@@ -120,6 +185,33 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 10,
+  },
+  // Styles
+locationBtn: {
+  flexDirection: 'row',
+  backgroundColor: '#2c3e50',
+  padding: 12,
+  borderRadius: 8,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: 15
+},
+locationText: { color: '#fff', fontWeight: 'bold', marginLeft: 8 } ,
+rightIcons: { flexDirection: 'row', alignItems: 'center' },
+iconPadding: { paddingHorizontal: 8 },
+actionRow: { marginVertical: 15 },
+actionBtn: {
+  flexDirection: 'row',
+  padding: 14,
+  borderRadius: 12,
+  alignItems: 'center',
+  justifyContent: 'center',
+  elevation: 2, // Android Shadow
+},
+  actionText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    marginLeft: 8 
   },
   title: { fontSize: 26, fontWeight: 'bold', color: '#1a1a1a', flex: 1, marginRight: 15 },
   favoriteBtn: { padding: 4 },
